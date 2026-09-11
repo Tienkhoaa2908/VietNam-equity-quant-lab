@@ -6,7 +6,6 @@ from pathlib import Path
 
 from vn_equity_quant.config import load_research_config
 from vn_equity_quant.data import CSVMarketDataSource, SyntheticMarketDataSource, build_manifest
-from vn_equity_quant.reporting import write_research_report
 from vn_equity_quant.research import run_research_pipeline
 
 
@@ -46,6 +45,8 @@ def main() -> None:
 
     config, result = _run(args.config)
     if args.command == "report":
+        from vn_equity_quant.reporting import write_research_report
+
         path = write_research_report(result, config, args.output)
         print(path)
         return
