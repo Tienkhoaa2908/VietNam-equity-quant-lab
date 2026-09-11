@@ -11,7 +11,6 @@ class ResearchConfig:
     symbol_count: int = 30
     sessions: int = 900
     prediction_horizon: int = 20
-    rebalance_frequency: str = "M"
     top_k: int = 10
     min_training_sessions: int = 252
     ridge_alpha: float = 10.0
