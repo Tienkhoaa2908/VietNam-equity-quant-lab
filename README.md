@@ -34,6 +34,16 @@ A signal formed from session `t` may use information available by the close of `
 
 These constraints are implemented in code and covered by tests. They are not documentation-only conventions.
 
+## Reproducible research example
+
+The committed example is generated from deterministic synthetic OHLCV data. Its purpose is to verify the complete research and reporting pipeline. It is not presented as Vietnamese-market performance.
+
+![Synthetic equity curve](artifacts/example_report/equity_curve.svg)
+
+![Synthetic drawdown](artifacts/example_report/drawdown.svg)
+
+The generated report also includes rank-IC, model coefficients, configuration, transaction costs, turnover, data lineage, and the dataset fingerprint. See [`artifacts/example_report/research_report.md`](artifacts/example_report/research_report.md).
+
 ## Repository layout
 
 ```text
@@ -89,9 +99,24 @@ Evaluate a realtime readiness snapshot:
 python examples/realtime_gate_demo.py
 ```
 
-## Example research output
+## Verification
 
-The committed example report is produced from deterministic synthetic data. It exists to demonstrate the research and reporting pipeline, not to claim investment performance.
+The repository uses two independent GitHub Actions workflows.
+
+| Check | Purpose |
+| --- | --- |
+| CI | lint, format validation, coverage and tests on Python 3.11, 3.12 and 3.13 |
+| Reproducibility | reruns the deterministic research pipeline, regenerates the report and verifies all expected artifacts |
+
+For a local full check:
+
+```bash
+make lint
+make test
+make report
+```
+
+## Example research output
 
 | Output | Location |
 | --- | --- |
