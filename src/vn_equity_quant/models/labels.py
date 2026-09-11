@@ -13,4 +13,6 @@ def attach_forward_labels(frame: pd.DataFrame, horizon: int) -> pd.DataFrame:
         part["target_forward_return"] = part["close"].shift(-horizon) / part["close"] - 1.0
         part["label_available_date"] = part["date"].shift(-horizon)
         parts.append(part)
-    return pd.concat(parts, ignore_index=True).sort_values(["date", "symbol"]).reset_index(drop=True)
+    return (
+        pd.concat(parts, ignore_index=True).sort_values(["date", "symbol"]).reset_index(drop=True)
+    )
