@@ -31,7 +31,7 @@ This report is generated from deterministic synthetic OHLCV data. It validates t
 | Signals | 31 |
 | Trades | 437 |
 | Transaction cost | 39,154,185 |
-| Annualized turnover | 10.34x |
+| Gross annualized turnover | 10.34x |
 
 ## Diagnostics
 
@@ -49,6 +49,7 @@ This report is generated from deterministic synthetic OHLCV data. It validates t
 - A forward label enters training only when `label_available_date <= signal_date`.
 - Portfolio targets formed on a signal date execute at the next available session open.
 - Transaction costs and round-lot constraints are applied during execution.
+- Missing prices for a target or held position stop the simulation rather than being skipped.
 
 ## Data lineage
 
