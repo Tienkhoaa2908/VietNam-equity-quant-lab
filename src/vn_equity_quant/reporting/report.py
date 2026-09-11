@@ -66,7 +66,7 @@ It is not evidence of expected returns in the Vietnamese equity market.
 | Signals | {int(metrics["signal_count"])} |
 | Trades | {int(metrics["trade_count"])} |
 | Transaction cost | {float(metrics["transaction_cost"]):,.0f} |
-| Annualized turnover | {float(metrics["annualized_turnover"]):.2f}x |
+| Gross annualized turnover | {float(metrics["annualized_turnover"]):.2f}x |
 
 ## Diagnostics
 
@@ -84,6 +84,7 @@ It is not evidence of expected returns in the Vietnamese equity market.
 - A forward label enters training only when `label_available_date <= signal_date`.
 - Portfolio targets formed on a signal date execute at the next available session open.
 - Transaction costs and round-lot constraints are applied during execution.
+- Missing prices for a target or held position stop the simulation rather than being skipped.
 
 ## Data lineage
 
