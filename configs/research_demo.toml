@@ -3,7 +3,6 @@ seed = 42
 symbol_count = 30
 sessions = 900
 prediction_horizon = 20
-rebalance_frequency = "M"
 top_k = 10
 min_training_sessions = 252
 ridge_alpha = 10.0
