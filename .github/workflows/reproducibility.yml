@@ -8,12 +8,17 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   demo:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -29,3 +34,6 @@ jobs:
           test -s artifacts/ci_report/research_report.md
           test -s artifacts/ci_report/equity_curve.svg
           test -s artifacts/ci_report/drawdown.svg
+          test -s artifacts/ci_report/rank_ic.svg
+          test -s artifacts/ci_report/model_coefficients.svg
+          test -s artifacts/ci_report/data_manifest.json
