@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
-import numpy as np
 import pandas as pd
 
 
@@ -10,141 +10,143 @@ import pandas as pd
 class BacktestResult:
     nav: pd.DataFrame
     trades: pd.DataFrame
+    holdings: pd.DataFrame
 
 
-class ExecutionAwareBacktester:
-    """Daily mark-to-market backtester with next-session-open rebalancing.
+def _next_session_map(dates: list[pd.Timestamp]) -> dict[pd.Timestamp, pd.Timestamp]:
+    return {dates[index]: dates[index + 1] for index in range(len(dates) - 1)}
 
-    Signals are assumed to be finalized after the close on the signal date.
-    Portfolio changes are therefore executed no earlier than the next available
-    market session open.
-    """
 
-    def __init__(
-        self,
-        *,
-        initial_nav: float = 1_000_000_000.0,
-        transaction_cost_bps: float = 10.0,
-        lot_size: int = 100,
-    ) -> None:
-        if initial_nav <= 0:
-            raise ValueError("initial_nav must be positive")
-        if transaction_cost_bps < 0:
-            raise ValueError("transaction_cost_bps must be non-negative")
-        if lot_size <= 0:
-            raise ValueError("lot_size must be positive")
-        self.initial_nav = float(initial_nav)
-        self.cost_rate = float(transaction_cost_bps) / 10_000.0
-        self.lot_size = int(lot_size)
+def _round_lot_shares(value: float, price: float, lot_size: int) -> int:
+    if value <= 0 or price <= 0:
+        return 0
+    return int(math.floor(value / price / lot_size) * lot_size)
 
-    def run(self, market: pd.DataFrame, targets: pd.DataFrame) -> BacktestResult:
-        prices = market.sort_values(["date", "symbol"]).copy()
-        dates = pd.DatetimeIndex(prices["date"].drop_duplicates()).sort_values()
-        if len(dates) < 2:
-            raise ValueError("at least two market sessions are required")
 
-        open_px = prices.pivot(index="date", columns="symbol", values="open").sort_index()
-        close_px = prices.pivot(index="date", columns="symbol", values="close").sort_index()
+def run_next_open_backtest(
+    market: pd.DataFrame,
+    targets: pd.DataFrame,
+    *,
+    initial_cash: float,
+    transaction_cost_bps: float,
+    lot_size: int,
+) -> BacktestResult:
+    """Simulate target rebalances at the next session open after each signal date."""
+    dates = sorted(pd.to_datetime(market["date"].unique()))
+    next_session = _next_session_map(dates)
+    price = market.set_index(["date", "symbol"])[["open", "close"]].sort_index()
+    targets_by_execution: dict[pd.Timestamp, pd.DataFrame] = {}
+    for signal_date, group in targets.groupby("date", sort=True):
+        execution = next_session.get(pd.Timestamp(signal_date))
+        if execution is not None:
+            targets_by_execution[execution] = group.copy()
 
-        schedule: dict[pd.Timestamp, pd.DataFrame] = {}
-        for signal_date, group in targets.groupby("date"):
-            signal_date = pd.Timestamp(signal_date)
-            future = dates[dates > signal_date]
-            if len(future) == 0:
-                continue
-            schedule[future[0]] = group.copy()
+    cash = float(initial_cash)
+    shares: dict[str, int] = {}
+    trade_rows: list[dict[str, object]] = []
+    nav_rows: list[dict[str, object]] = []
+    holding_rows: list[dict[str, object]] = []
+    cost_rate = transaction_cost_bps / 10_000.0
 
-        cash = self.initial_nav
-        holdings: dict[str, int] = {}
-        nav_rows: list[dict[str, object]] = []
-        trades: list[dict[str, object]] = []
+    for date in dates:
+        day_prices = price.loc[date]
+        if date in targets_by_execution:
+            target_frame = targets_by_execution[date]
+            target_weights = dict(
+                zip(target_frame["symbol"], target_frame["target_weight"], strict=True)
+            )
+            equity_open = cash
+            for symbol, quantity in shares.items():
+                if symbol in day_prices.index:
+                    equity_open += quantity * float(day_prices.loc[symbol, "open"])
 
-        for date in dates:
-            if date in schedule:
-                cash, holdings, event_trades = self._rebalance(
-                    date=date,
-                    target_rows=schedule[date],
-                    open_prices=open_px.loc[date],
-                    cash=cash,
-                    holdings=holdings,
+            desired: dict[str, int] = {}
+            for symbol, weight in target_weights.items():
+                if symbol not in day_prices.index:
+                    continue
+                open_price = float(day_prices.loc[symbol, "open"])
+                desired[symbol] = _round_lot_shares(
+                    equity_open * float(weight), open_price, lot_size
                 )
-                trades.extend(event_trades)
+            for symbol in list(shares):
+                desired.setdefault(symbol, 0)
 
-            marked_value = cash
-            for symbol, quantity in holdings.items():
-                price = close_px.at[date, symbol] if symbol in close_px.columns else np.nan
-                if np.isfinite(price):
-                    marked_value += quantity * float(price)
-            nav_rows.append({"date": date, "nav": float(marked_value), "cash": float(cash)})
+            deltas = {symbol: desired[symbol] - shares.get(symbol, 0) for symbol in desired}
+            for symbol, delta in sorted(deltas.items()):
+                if delta >= 0 or symbol not in day_prices.index:
+                    continue
+                open_price = float(day_prices.loc[symbol, "open"])
+                quantity = -delta
+                notional = quantity * open_price
+                cost = notional * cost_rate
+                cash += notional - cost
+                shares[symbol] = shares.get(symbol, 0) - quantity
+                trade_rows.append(
+                    {
+                        "date": date,
+                        "symbol": symbol,
+                        "side": "SELL",
+                        "quantity": quantity,
+                        "price": open_price,
+                        "notional": notional,
+                        "cost": cost,
+                    }
+                )
 
-        return BacktestResult(nav=pd.DataFrame(nav_rows), trades=pd.DataFrame(trades))
+            for symbol, delta in sorted(deltas.items()):
+                if delta <= 0 or symbol not in day_prices.index:
+                    continue
+                open_price = float(day_prices.loc[symbol, "open"])
+                affordable_lots = int(cash // (open_price * lot_size * (1.0 + cost_rate)))
+                requested_lots = delta // lot_size
+                buy_lots = max(0, min(requested_lots, affordable_lots))
+                quantity = buy_lots * lot_size
+                if quantity <= 0:
+                    continue
+                notional = quantity * open_price
+                cost = notional * cost_rate
+                cash -= notional + cost
+                shares[symbol] = shares.get(symbol, 0) + quantity
+                trade_rows.append(
+                    {
+                        "date": date,
+                        "symbol": symbol,
+                        "side": "BUY",
+                        "quantity": quantity,
+                        "price": open_price,
+                        "notional": notional,
+                        "cost": cost,
+                    }
+                )
+            shares = {symbol: quantity for symbol, quantity in shares.items() if quantity > 0}
 
-    def _rebalance(
-        self,
-        *,
-        date: pd.Timestamp,
-        target_rows: pd.DataFrame,
-        open_prices: pd.Series,
-        cash: float,
-        holdings: dict[str, int],
-    ) -> tuple[float, dict[str, int], list[dict[str, object]]]:
-        event_trades: list[dict[str, object]] = []
-
-        for symbol, quantity in list(holdings.items()):
-            price = float(open_prices.get(symbol, np.nan))
-            if quantity <= 0 or not np.isfinite(price) or price <= 0:
+        market_value = 0.0
+        for symbol, quantity in sorted(shares.items()):
+            if symbol not in day_prices.index:
                 continue
-            gross = quantity * price
-            fee = gross * self.cost_rate
-            cash += gross - fee
-            event_trades.append(
+            close_price = float(day_prices.loc[symbol, "close"])
+            value = quantity * close_price
+            market_value += value
+            holding_rows.append(
                 {
                     "date": date,
                     "symbol": symbol,
-                    "side": "SELL",
                     "quantity": quantity,
-                    "price": price,
-                    "gross_value": gross,
-                    "cost": fee,
+                    "close": close_price,
+                    "market_value": value,
                 }
             )
-        holdings = {}
+        nav_rows.append(
+            {
+                "date": date,
+                "cash": cash,
+                "market_value": market_value,
+                "nav": cash + market_value,
+            }
+        )
 
-        usable = target_rows.dropna(subset=["target_weight"]).copy()
-        usable = usable[usable["symbol"].isin(open_prices.index)]
-        if usable.empty:
-            return cash, holdings, event_trades
-
-        nav_at_open = cash
-        for row in usable.itertuples(index=False):
-            symbol = str(row.symbol)
-            price = float(open_prices.get(symbol, np.nan))
-            weight = float(row.target_weight)
-            if not np.isfinite(price) or price <= 0 or weight <= 0:
-                continue
-            budget = nav_at_open * weight
-            all_in_lot_cost = price * self.lot_size * (1.0 + self.cost_rate)
-            lots = int(budget // all_in_lot_cost)
-            quantity = lots * self.lot_size
-            if quantity <= 0:
-                continue
-            gross = quantity * price
-            fee = gross * self.cost_rate
-            total = gross + fee
-            if total > cash + 1e-9:
-                continue
-            cash -= total
-            holdings[symbol] = quantity
-            event_trades.append(
-                {
-                    "date": date,
-                    "symbol": symbol,
-                    "side": "BUY",
-                    "quantity": quantity,
-                    "price": price,
-                    "gross_value": gross,
-                    "cost": fee,
-                }
-            )
-
-        return cash, holdings, event_trades
+    return BacktestResult(
+        nav=pd.DataFrame(nav_rows),
+        trades=pd.DataFrame(trade_rows),
+        holdings=pd.DataFrame(holding_rows),
+    )

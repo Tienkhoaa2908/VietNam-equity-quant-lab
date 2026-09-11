@@ -1,44 +1,42 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 REQUIRED_COLUMNS = ("date", "symbol", "open", "high", "low", "close", "volume")
 
 
 def validate_market_frame(frame: pd.DataFrame) -> pd.DataFrame:
-    """Validate and normalize long-form OHLCV market data.
+    """Validate and canonicalize long-form OHLCV data.
 
-    The returned frame is sorted by symbol and date and contains one row per
-    symbol-session. Validation is intentionally strict because downstream
-    research assumes a stable point-in-time price table.
+    Prices are expressed in one consistent currency unit. The validator deliberately
+    does not guess price scaling or corporate-action adjustments.
     """
-
     missing = [column for column in REQUIRED_COLUMNS if column not in frame.columns]
     if missing:
-        raise ValueError(f"Missing required columns: {missing}")
+        raise ValueError(f"missing required columns: {missing}")
 
     out = frame.loc[:, REQUIRED_COLUMNS].copy()
-    out["date"] = pd.to_datetime(out["date"], utc=False).dt.normalize()
-    out["symbol"] = out["symbol"].astype(str).str.upper().str.strip()
-
-    numeric_columns = ["open", "high", "low", "close", "volume"]
-    for column in numeric_columns:
-        out[column] = pd.to_numeric(out[column], errors="raise")
-
-    if out[["date", "symbol"]].isna().any().any():
-        raise ValueError("date and symbol must be non-null")
+    out["date"] = pd.to_datetime(out["date"], errors="raise").dt.normalize()
+    out["symbol"] = out["symbol"].astype(str).str.strip().str.upper()
     if (out["symbol"] == "").any():
-        raise ValueError("symbol must be non-empty")
-    if out.duplicated(["date", "symbol"]).any():
-        raise ValueError("duplicate symbol-session rows are not allowed")
+        raise ValueError("symbol cannot be empty")
+
+    for column in ("open", "high", "low", "close", "volume"):
+        out[column] = pd.to_numeric(out[column], errors="raise")
+        if not np.isfinite(out[column].to_numpy(dtype=float)).all():
+            raise ValueError(f"{column} contains non-finite values")
+
     if (out[["open", "high", "low", "close"]] <= 0).any().any():
-        raise ValueError("OHLC prices must be positive")
+        raise ValueError("prices must be strictly positive")
     if (out["volume"] < 0).any():
-        raise ValueError("volume must be non-negative")
+        raise ValueError("volume cannot be negative")
+    if (out["high"] < out[["open", "close", "low"]].max(axis=1)).any():
+        raise ValueError("high is below another price field")
+    if (out["low"] > out[["open", "close", "high"]].min(axis=1)).any():
+        raise ValueError("low is above another price field")
+    if out.duplicated(["date", "symbol"]).any():
+        raise ValueError("duplicate date-symbol rows")
 
-    invalid_high = out["high"] < out[["open", "close", "low"]].max(axis=1)
-    invalid_low = out["low"] > out[["open", "close", "high"]].min(axis=1)
-    if invalid_high.any() or invalid_low.any():
-        raise ValueError("OHLC ordering is inconsistent")
-
-    return out.sort_values(["symbol", "date"], kind="stable").reset_index(drop=True)
+    out["volume"] = out["volume"].round().astype("int64")
+    return out.sort_values(["date", "symbol"], kind="mergesort").reset_index(drop=True)

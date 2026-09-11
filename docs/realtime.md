@@ -1,17 +1,18 @@
-# Realtime execution-reference controls
+# Realtime readiness
 
-The realtime module demonstrates a fail-closed manual execution gate. It does not place orders.
+Realtime state is evaluated independently from historical model research.
 
-The gate tracks market and broker state independently. A manual entry reference is available only when the required conditions are current:
+A manual execution reference is ready only when all required conditions are true:
 
-- market window is open;
+- the expected market window is open;
 - transport is connected;
-- public feed authentication is valid;
+- the public feed is authenticated;
 - subscriptions are active;
-- heartbeat is current;
-- best bid or offer data is fresh;
-- broker snapshot is fresh.
+- heartbeat is healthy;
+- the order book is fresh;
+- the broker snapshot is fresh;
+- a valid best ask exists.
 
-Trade freshness and order-book freshness use separate clocks. A recent trade does not make an old bid-offer quote current.
+Trade freshness and order-book freshness are separate concepts. A recent trade does not make an old best bid or offer current.
 
-This design keeps realtime execution references separate from historical model selection.
+When any requirement fails, the gate returns `BLOCKED_FAIL_CLOSED` and an explicit reason list. The module does not submit, cancel or replace broker orders.

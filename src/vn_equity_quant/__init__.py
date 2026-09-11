@@ -1,6 +1,3 @@
-"""Core package for Vietnam Equity Quant Lab."""
+"""Vietnam Equity Quant Lab public research package."""
 
-from .config import ResearchConfig
-
-__all__ = ["ResearchConfig"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

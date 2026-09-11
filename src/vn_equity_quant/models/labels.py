@@ -3,16 +3,18 @@ from __future__ import annotations
 import pandas as pd
 
 
-def add_forward_return_labels(frame: pd.DataFrame, horizon: int = 20) -> pd.DataFrame:
-    """Attach forward return labels and the date on which each label is known."""
-
-    if horizon <= 0:
+def attach_forward_labels(frame: pd.DataFrame, horizon: int) -> pd.DataFrame:
+    """Attach close-to-close forward returns and the date they become observable."""
+    if horizon < 1:
         raise ValueError("horizon must be positive")
-
-    out = frame.sort_values(["symbol", "date"], kind="stable").copy()
-    grouped = out.groupby("symbol", group_keys=False)
-    future_close = grouped["close"].shift(-horizon)
-    future_date = grouped["date"].shift(-horizon)
-    out["target_forward_return"] = future_close / out["close"] - 1.0
-    out["label_available_date"] = future_date
-    return out
+    parts: list[pd.DataFrame] = []
+    for _, symbol_frame in frame.groupby("symbol", sort=False):
+        part = symbol_frame.sort_values("date").copy()
+        part["target_forward_return"] = part["close"].shift(-horizon) / part["close"] - 1.0
+        part["label_available_date"] = part["date"].shift(-horizon)
+        parts.append(part)
+    return (
+        pd.concat(parts, ignore_index=True)
+        .sort_values(["date", "symbol"])
+        .reset_index(drop=True)
+    )

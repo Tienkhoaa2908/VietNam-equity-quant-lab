@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: Vietnam Equity Quant Lab
+message: "If this repository is useful in academic work, cite the software repository."
+type: software
+authors:
+  - name: Tienkhoaa2908
+repository-code: "https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab"
+license: MIT
+version: 0.2.0
+date-released: 2026-09-11

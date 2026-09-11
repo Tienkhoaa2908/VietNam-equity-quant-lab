@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible software defect
+title: "[bug] "
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: State the observed and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide the smallest command or code sample that reproduces the issue.
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+    validations:
+      required: true

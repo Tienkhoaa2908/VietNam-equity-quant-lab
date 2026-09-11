@@ -1,4 +1,3 @@
-from .construction import equal_weight_targets
-from .ranking import rank_cross_section
+from .construction import build_equal_weight_targets
 
-__all__ = ["equal_weight_targets", "rank_cross_section"]
+__all__ = ["build_equal_weight_targets"]

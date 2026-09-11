@@ -1,10 +1,12 @@
-from .labels import add_forward_return_labels
+from .diagnostics import information_coefficient_series
+from .labels import attach_forward_labels
 from .linear import RidgeCrossSectionalModel
-from .validation import WalkForwardSplit, expanding_walk_forward_splits
+from .walk_forward import WalkForwardResult, walk_forward_predictions
 
 __all__ = [
     "RidgeCrossSectionalModel",
-    "WalkForwardSplit",
-    "add_forward_return_labels",
-    "expanding_walk_forward_splits",
+    "WalkForwardResult",
+    "attach_forward_labels",
+    "information_coefficient_series",
+    "walk_forward_predictions",
 ]

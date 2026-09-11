@@ -1,19 +1,42 @@
 # Architecture
 
-The repository uses a `src` package layout and separates market data, features, models, portfolio construction, execution simulation, and realtime freshness checks.
+The repository separates data acquisition, feature computation, model fitting, portfolio construction, execution simulation, diagnostics, and reporting. Each layer has a narrow contract and can be tested independently.
 
-![System pipeline](assets/system_pipeline.svg)
+```text
+Data source
+   │
+   ▼
+Schema validation ──► lineage fingerprint
+   │
+   ▼
+Backward-looking features
+   │
+   ▼
+Cross-sectional normalization
+   │
+   ▼
+Forward labels + availability timestamps
+   │
+   ▼
+Chronological model fit
+   │
+   ▼
+Cross-sectional scores
+   │
+   ▼
+Top-k portfolio targets
+   │
+   ▼
+Next-session-open simulator
+   │
+   ├── transaction costs
+   ├── round lots
+   └── residual cash
+   │
+   ▼
+NAV, drawdown, turnover, rank IC, report
+```
 
-## Package boundaries
+Realtime readiness is deliberately separate from historical research. It evaluates market-session state, public-feed health, order-book freshness, broker freshness, and the presence of an execution reference. It does not rerank the historical model or submit orders.
 
-| Package | Responsibility |
-| --- | --- |
-| `data` | Source interfaces, schema validation, deterministic synthetic data |
-| `features` | Backward-looking technical features and cross-sectional normalization |
-| `models` | Forward labels, causal training, walk-forward split utilities |
-| `portfolio` | Cross-sectional ranking and target weights |
-| `backtest` | Next-session execution, costs, lot sizing, daily NAV accounting |
-| `realtime` | Independent freshness checks for market data and broker state |
-| `research` | End-to-end orchestration |
-
-Provider-specific code is kept outside the research core. This prevents source authentication, broker state, and vendor-specific data formats from becoming implicit assumptions in model code.
+The package follows a `src/` layout so imports in tests and examples resolve the installed package rather than the repository working directory.

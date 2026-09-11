@@ -11,5 +11,4 @@ state = ExecutionGateInput(
     broker_age_seconds=35.0,
     best_ask=26_400.0,
 )
-
 print(evaluate_manual_entry_gate(state))

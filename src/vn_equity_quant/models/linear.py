@@ -11,9 +11,7 @@ from vn_equity_quant.features.cross_sectional import MODEL_FEATURES
 
 @dataclass
 class RidgeCrossSectionalModel:
-    """Simple linear cross-sectional return model used in the public demo."""
-
-    alpha: float = 1.0
+    alpha: float = 10.0
     feature_names: tuple[str, ...] = MODEL_FEATURES
     _model: Ridge = field(init=False, repr=False)
 
@@ -27,21 +25,21 @@ class RidgeCrossSectionalModel:
             & (frame["label_available_date"] <= cutoff)
             & frame["target_forward_return"].notna()
         ].dropna(subset=list(self.feature_names))
-        if len(eligible) < 50:
+        if len(eligible) < 100:
             raise ValueError("insufficient causally available training rows")
-        x = eligible.loc[:, self.feature_names].to_numpy(dtype=float)
-        y = eligible["target_forward_return"].to_numpy(dtype=float)
-        self._model.fit(x, y)
+        self._model.fit(
+            eligible.loc[:, self.feature_names].to_numpy(dtype=float),
+            eligible["target_forward_return"].to_numpy(dtype=float),
+        )
         return self
 
     def predict(self, frame: pd.DataFrame) -> pd.Series:
-        valid = frame.dropna(subset=list(self.feature_names))
         output = pd.Series(np.nan, index=frame.index, dtype=float)
-        if valid.empty:
-            return output
-        output.loc[valid.index] = self._model.predict(
-            valid.loc[:, self.feature_names].to_numpy(dtype=float)
-        )
+        valid = frame.dropna(subset=list(self.feature_names))
+        if not valid.empty:
+            output.loc[valid.index] = self._model.predict(
+                valid.loc[:, self.feature_names].to_numpy(dtype=float)
+            )
         return output
 
     @property

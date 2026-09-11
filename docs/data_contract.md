@@ -1,19 +1,23 @@
-# Market data contract
+# Data contract
 
-The core package expects long-form OHLCV data with one row per symbol and market session.
+The canonical input is one row per symbol and trading session.
 
-| Column | Type | Constraint |
+| Column | Type | Rule |
 | --- | --- | --- |
-| `date` | datetime | market-session date |
-| `symbol` | string | non-empty, normalized to uppercase |
+| `date` | date | normalized trading-session date |
+| `symbol` | string | non-empty, upper case after validation |
 | `open` | float | positive |
-| `high` | float | not below open, close, or low |
-| `low` | float | not above open, close, or high |
+| `high` | float | not below open, close or low |
+| `low` | float | not above open, close or high |
 | `close` | float | positive |
-| `volume` | numeric | non-negative |
+| `volume` | integer | non-negative |
 
-Duplicate symbol-session rows are rejected.
+The validator rejects duplicate date-symbol pairs, missing columns, non-finite values and impossible OHLC relationships.
 
-The repository does not include proprietary Vietnamese market history, broker account data, or provider credentials. Source adapters are deliberately separated from the research engine. A deterministic synthetic generator is included so the complete pipeline can be executed without external data access.
+## Price basis
 
-For real research, a provider adapter should preserve acquisition timestamps, price-adjustment semantics, corporate-action handling, and source revision lineage.
+The public validator does not guess whether vendor prices are raw or adjusted. A production research system should establish one coherent price basis, apply corporate actions causally, and preserve source lineage before using long-horizon historical results as execution evidence.
+
+## Lineage
+
+`build_manifest` records row count, symbol count, first and last dates, and a deterministic SHA-256 fingerprint of the canonical frame. A changed fingerprint means the research input changed and results should be regenerated.

@@ -1,22 +1,15 @@
 # Contributing
 
-Contributions should preserve the causal research contract of the project.
+Changes should preserve the repository's causal research contract and reproducibility.
 
-## Development setup
+## Development workflow
 
-```bash
-python -m pip install -e ".[dev]"
-pytest
-ruff check src tests examples
-```
+1. Create a branch from `main`.
+2. Install `.[dev,report]`.
+3. Add or update tests for behavioral changes.
+4. Run `make lint` and `make test`.
+5. Keep datasets, credentials, account identifiers, broker payloads, and proprietary data out of the repository.
 
-## Requirements
+## Research changes
 
-- Keep signal timestamps and execution timestamps explicit.
-- Do not use future observations in feature construction.
-- Use chronological validation for model selection.
-- Include transaction costs in strategy comparisons.
-- Add tests for any change to data validation, execution timing, or portfolio accounting.
-- Do not add broker credentials, account data, proprietary raw datasets, or live-order mutation code.
-
-Pull requests should state the research assumption being changed and the evidence used to validate it.
+A research change should state the information timestamp, label timestamp, execution timestamp, cost assumptions, and evaluation period. Do not introduce random train/test splits for time-series evaluation or same-close execution for close-derived signals.

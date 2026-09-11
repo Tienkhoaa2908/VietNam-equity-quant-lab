@@ -1,15 +1,13 @@
-# Scope and limitations
+# Limitations
 
-This repository is a public technical implementation of quantitative research methods. It is not a brokerage client and does not provide live-order execution.
+This repository is a technical research demonstration, not a production trading system.
 
-The included dataset generator is synthetic. Results produced by the examples are software demonstrations and are not evidence of expected investment performance.
+- The committed report uses synthetic data and does not represent Vietnamese-market performance.
+- Commercial market data and broker/account data are intentionally excluded.
+- The generic schema does not establish a vendor's raw-versus-adjusted price basis.
+- The example does not reconstruct corporate actions or point-in-time index membership.
+- The execution model uses next-session open prices with explicit costs but does not simulate queue position, partial fills, price limits, halts or market impact.
+- The model is a transparent Ridge baseline, not a claim that linear regression is the preferred production estimator.
+- Realtime logic is a readiness gate only and contains no order mutation.
 
-The repository intentionally excludes:
-
-- broker credentials and account state;
-- proprietary or licensed raw market datasets;
-- production trading state;
-- live order submission, cancellation, and replacement;
-- private research history that is not required to explain the core methods.
-
-Real-market evaluation requires additional controls for corporate actions, survivorship, delistings, trading halts, exchange rules, source revisions, liquidity, slippage, taxes, and broker-specific execution constraints.
+A result is only as credible as its data provenance, causal timing, transaction assumptions and independent evaluation period.

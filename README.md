@@ -1,146 +1,128 @@
 # Vietnam Equity Quant Lab
 
 [![CI](https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Reproducibility](https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/actions/workflows/reproducibility.yml)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A causal, execution-aware quantitative research framework for Vietnamese equities.
+A reproducible quantitative-equity research framework focused on causal model training, cross-sectional ranking, execution-aware backtesting, data-quality controls, and realtime readiness checks.
 
-This repository presents the core technical methods of a larger private research system. It covers market-data validation, feature engineering, chronological model training, cross-sectional ranking, portfolio construction, transaction-aware backtesting, and realtime freshness controls. Broker credentials, account data, proprietary datasets, and production trading state are not included.
+This public repository presents the technical core of a larger private Vietnamese-equity research system. It intentionally excludes broker credentials, account data, proprietary datasets, production state, and order-submission code.
 
-![Research pipeline](docs/assets/system_pipeline.svg)
+![System pipeline](docs/assets/system_pipeline.svg)
 
-## Core capabilities
+## What the repository demonstrates
 
-- strict OHLCV schema validation and source abstraction;
-- backward-looking momentum, volatility, price-state, and volume features;
-- cross-sectional feature normalization;
-- forward-return labels with explicit label-availability dates;
-- expanding chronological validation utilities;
-- transparent Ridge cross-sectional return model;
-- top-k ranking and equal-weight portfolio construction;
-- next-session-open execution to prevent same-close look-ahead;
-- transaction costs, round-lot sizing, residual cash, and daily NAV accounting;
-- fail-closed realtime market and broker freshness checks;
-- deterministic synthetic data for reproducible tests and examples.
+- validated OHLCV ingestion from local files or HTTP CSV sources;
+- deterministic data fingerprints and source manifests;
+- backward-looking momentum, volatility, price-position, and liquidity features;
+- cross-sectional winsorization and normalization;
+- forward-return labels with explicit availability dates;
+- expanding, chronological model training with no random train/test split;
+- cross-sectional Ridge regression and rank-information-coefficient diagnostics;
+- top-k equal-weight portfolio construction;
+- next-session-open execution, round-lot sizing, transaction costs, residual cash, and continuous NAV;
+- deterministic research reports with equity, drawdown, rank-IC, and coefficient charts;
+- fail-closed realtime checks that keep trade, order-book, and broker freshness separate;
+- automated tests for causality, accounting, schema validity, reproducibility, and stale-data handling.
 
-## Research contract
+## Research timing contract
 
-The implementation follows four rules.
+A signal formed from session `t` may use information available by the close of `t`. It executes no earlier than the open of the next market session. A forward label is eligible for training only after the entire label horizon has been observed.
 
-1. Features use information available at or before their timestamp.
-2. Training labels are used only after the complete forward horizon is observable.
-3. Signals formed at session close execute no earlier than the next market-session open.
-4. Strategy evaluation includes transaction costs and explicit portfolio accounting.
+![Causal timeline](docs/assets/causal_timeline.svg)
 
-The timing contract is documented in [Research methodology](docs/methodology.md).
+These constraints are implemented in code and covered by tests. They are not documentation-only conventions.
 
-## Repository structure
+## Repository layout
 
 ```text
 .
+├── configs/                         # reproducible research settings
+├── data/sample/                     # small public-safe schema example
+├── docs/                            # architecture, methodology, model and data contracts
+├── examples/                        # minimal executable examples
+├── artifacts/example_report/        # deterministic report generated from synthetic data
+├── scripts/                         # data and report utilities
 ├── src/vn_equity_quant/
-│   ├── data/          # source interfaces, schema validation, synthetic data
-│   ├── features/      # backward-looking features and cross-sectional transforms
-│   ├── models/        # labels, model fitting, chronological validation
-│   ├── portfolio/     # ranking and target construction
-│   ├── backtest/      # next-session execution and NAV accounting
-│   ├── realtime/      # market and broker freshness gates
-│   └── research/      # end-to-end research orchestration
-├── examples/          # executable research and realtime examples
-├── tests/             # causal, accounting, and data-quality tests
-├── docs/              # methodology, architecture, data contract, limitations
-└── .github/workflows/ # continuous integration
+│   ├── data/                        # source adapters, validation, lineage
+│   ├── features/                    # time-series and cross-sectional features
+│   ├── models/                      # labels, Ridge model, chronological fitting
+│   ├── portfolio/                   # ranking and target weights
+│   ├── backtest/                    # next-open simulator and metrics
+│   ├── realtime/                    # freshness and readiness gates
+│   ├── reporting/                   # charts and research report generation
+│   └── research/                    # end-to-end orchestration
+└── tests/                           # causal, accounting and integration tests
 ```
-
-The layout follows the same separation of library code, tests, examples, documentation, and automated quality checks used by established scientific Python and quantitative-research projects.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab.git
-cd VietNam-equity-quant-lab
 python -m venv .venv
-```
-
-Activate the environment, then install the package.
-
-```bash
-python -m pip install -e ".[dev]"
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+python -m pip install -e ".[dev,report]"
 pytest
-python examples/run_research_pipeline.py
 ```
 
-The example generates deterministic synthetic OHLCV data, builds features, fits the model using causally available labels, creates monthly rankings, and runs the execution-aware backtest.
-
-The same pipeline is available as a console command.
+Run the deterministic demonstration:
 
 ```bash
-veql-demo
+vnq demo --config configs/research_demo.toml
 ```
 
-## Pipeline
+Generate a complete report:
 
-```python
-from vn_equity_quant.config import ResearchConfig
-from vn_equity_quant.data import SyntheticMarketDataSource
-from vn_equity_quant.research import run_research_pipeline
-
-source = SyntheticMarketDataSource(symbol_count=30, sessions=900, seed=42)
-result = run_research_pipeline(source, ResearchConfig())
-
-print(result.metrics)
+```bash
+vnq report --config configs/research_demo.toml --output artifacts/local_report
 ```
 
-For external market data, implement the `MarketDataSource` protocol or use the CSV adapter described in [Market data contract](docs/data_contract.md).
+Validate a CSV dataset against the project data contract:
 
-## Causal execution
-
-![Causal timeline](docs/assets/causal_timeline.svg)
-
-The backtester separates signal formation from execution. A ranking computed after the close at `T` is executed at the next available session open. Tests enforce this behavior.
-
-## Realtime controls
-
-The realtime component is an execution-reference safety layer rather than a trading strategy. It independently checks market-window state, transport, authentication, subscriptions, heartbeat, bid-offer freshness, and broker snapshot freshness.
-
-```python
-from vn_equity_quant.realtime import ExecutionGateInput, evaluate_manual_entry_gate
-
-result = evaluate_manual_entry_gate(
-    ExecutionGateInput(
-        market_window_open=True,
-        transport_connected=True,
-        authenticated=True,
-        subscriptions_active=True,
-        heartbeat_healthy=True,
-        trade_age_seconds=0.8,
-        bbo_age_seconds=1.2,
-        broker_age_seconds=35.0,
-        best_ask=26_400.0,
-    )
-)
+```bash
+vnq validate --csv data/sample/mini_ohlcv.csv
 ```
 
-A fresh trade cannot override a stale order book. The gate fails closed when required evidence is missing or stale.
+Evaluate a realtime readiness snapshot:
+
+```bash
+python examples/realtime_gate_demo.py
+```
+
+## Example research output
+
+The committed example report is produced from deterministic synthetic data. It exists to demonstrate the research and reporting pipeline, not to claim investment performance.
+
+| Output | Location |
+| --- | --- |
+| Research report | [`artifacts/example_report/research_report.md`](artifacts/example_report/research_report.md) |
+| Metrics | [`artifacts/example_report/metrics.json`](artifacts/example_report/metrics.json) |
+| Equity curve | [`artifacts/example_report/equity_curve.svg`](artifacts/example_report/equity_curve.svg) |
+| Drawdown | [`artifacts/example_report/drawdown.svg`](artifacts/example_report/drawdown.svg) |
+| Rank IC | [`artifacts/example_report/rank_ic.svg`](artifacts/example_report/rank_ic.svg) |
+| Model coefficients | [`artifacts/example_report/model_coefficients.svg`](artifacts/example_report/model_coefficients.svg) |
+
+## Data policy
+
+The framework does not redistribute commercial Vietnamese market data. Public code accepts a documented OHLCV schema and can be connected to a lawful data source through the source adapters. The repository includes a small synthetic sample for schema validation and deterministic generated data for full demonstrations.
+
+See [Data contract](docs/data_contract.md) and [Data sources](docs/data_sources.md).
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Research methodology](docs/methodology.md)
-- [Market data contract](docs/data_contract.md)
-- [Realtime controls](docs/realtime.md)
-- [Scope and limitations](docs/limitations.md)
+- [Data contract](docs/data_contract.md)
+- [Data-source integration](docs/data_sources.md)
+- [Model card](docs/model_card.md)
+- [Backtest contract](docs/backtest_contract.md)
+- [Realtime readiness](docs/realtime.md)
+- [Reproducibility](docs/reproducibility.md)
+- [Limitations](docs/limitations.md)
 
-## Quality controls
+## Scope
 
-Continuous integration runs on Python 3.11, 3.12, and 3.13. The test suite covers data validation, no-future feature construction, causal label availability, next-session execution, realtime freshness separation, and the end-to-end pipeline.
-
-```bash
-make lint
-make test
-make demo
-```
+This repository is research software. It does not place, cancel, or replace broker orders. Realtime components return readiness states and execution references only. Historical results generated by the demonstration use synthetic data and must not be interpreted as expected market returns.
 
 ## License
 

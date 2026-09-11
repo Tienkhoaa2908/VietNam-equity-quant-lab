@@ -1,0 +1,31 @@
+name: Reproducibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[report]"
+      - name: Run deterministic research demo
+        run: vnq demo --config configs/research_demo.toml --json artifacts/ci_metrics.json
+      - name: Generate report
+        run: vnq report --config configs/research_demo.toml --output artifacts/ci_report
+      - name: Verify outputs
+        run: |
+          test -s artifacts/ci_metrics.json
+          test -s artifacts/ci_report/research_report.md
+          test -s artifacts/ci_report/equity_curve.svg
+          test -s artifacts/ci_report/drawdown.svg

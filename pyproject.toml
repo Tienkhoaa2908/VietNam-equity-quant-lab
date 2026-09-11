@@ -4,49 +4,64 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vn-equity-quant-lab"
-version = "0.1.0"
-description = "Causal, execution-aware quantitative research framework for Vietnamese equities."
+version = "0.2.0"
+description = "Causal quantitative-equity research and execution-aware backtesting framework"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = {file = "LICENSE"}
 authors = [{name = "Tienkhoaa2908"}]
-keywords = ["quantitative-finance", "vietnam", "equities", "backtesting", "factor-investing", "time-series"]
+keywords = ["quantitative-finance", "backtesting", "factor-investing", "machine-learning", "vietnam"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
+  "Intended Audience :: Financial and Insurance Industry",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
   "numpy>=1.26",
   "pandas>=2.2",
   "scikit-learn>=1.5",
+  "requests>=2.32",
 ]
 
 [project.optional-dependencies]
+report = ["matplotlib>=3.8"]
 dev = [
+  "matplotlib>=3.8",
   "pytest>=8.3",
   "pytest-cov>=5.0",
-  "ruff>=0.7",
+  "ruff>=0.9",
 ]
 
 [project.scripts]
-veql-demo = "vn_equity_quant.cli:main"
+vnq = "vn_equity_quant.cli:main"
+
+[project.urls]
+Repository = "https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab"
+Documentation = "https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/tree/main/docs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vn_equity_quant"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q"
-
 [tool.ruff]
-line-length = 100
 target-version = "py311"
+line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
-ignore = ["E501"]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["vn_equity_quant"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
