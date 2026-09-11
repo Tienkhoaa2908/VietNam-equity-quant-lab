@@ -1,6 +1,5 @@
 from vn_equity_quant.realtime import ExecutionGateInput, evaluate_manual_entry_gate
 
-
 state = ExecutionGateInput(
     market_window_open=True,
     transport_connected=True,

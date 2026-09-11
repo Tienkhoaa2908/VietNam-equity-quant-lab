@@ -6,7 +6,6 @@ from vn_equity_quant.config import ResearchConfig
 from vn_equity_quant.data import SyntheticMarketDataSource
 from vn_equity_quant.research import run_research_pipeline
 
-
 source = SyntheticMarketDataSource(symbol_count=30, sessions=900, seed=42)
 config = ResearchConfig(
     prediction_horizon=20,

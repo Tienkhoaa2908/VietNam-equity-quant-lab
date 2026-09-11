@@ -41,18 +41,18 @@ class SyntheticMarketDataSource:
             low = np.minimum(open_price, close) * np.maximum(0.80, 1.0 - intraday_spread)
             volume = rng.lognormal(mean=13.0, sigma=0.55, size=self.sessions).astype(int)
 
-            for day, o, h, l, c, v in zip(
+            for day, open_value, high_value, low_value, close_value, volume_value in zip(
                 dates, open_price, high, low, close, volume, strict=True
             ):
                 rows.append(
                     {
                         "date": day,
                         "symbol": symbol,
-                        "open": float(o),
-                        "high": float(h),
-                        "low": float(l),
-                        "close": float(c),
-                        "volume": int(v),
+                        "open": float(open_value),
+                        "high": float(high_value),
+                        "low": float(low_value),
+                        "close": float(close_value),
+                        "volume": int(volume_value),
                     }
                 )
 

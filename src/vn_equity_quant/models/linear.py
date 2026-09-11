@@ -20,7 +20,7 @@ class RidgeCrossSectionalModel:
     def __post_init__(self) -> None:
         self._model = Ridge(alpha=self.alpha, fit_intercept=True)
 
-    def fit(self, frame: pd.DataFrame, as_of: pd.Timestamp) -> "RidgeCrossSectionalModel":
+    def fit(self, frame: pd.DataFrame, as_of: pd.Timestamp) -> RidgeCrossSectionalModel:
         cutoff = pd.Timestamp(as_of).normalize()
         eligible = frame[
             frame["label_available_date"].notna()
