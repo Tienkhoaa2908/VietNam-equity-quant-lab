@@ -57,16 +57,16 @@ It is not evidence of expected returns in the Vietnamese equity market.
 
 | Metric | Value |
 | --- | ---: |
-| Total return | {_pct(float(metrics['total_return']))} |
-| CAGR | {_pct(float(metrics['cagr']))} |
-| Maximum drawdown | {_pct(float(metrics['max_drawdown']))} |
-| Annualized volatility | {_pct(float(metrics['annualized_volatility']))} |
-| Sharpe, zero rate | {float(metrics['sharpe_zero_rate']):.2f} |
-| Mean rank IC | {float(metrics['mean_rank_ic']):.3f} |
-| Signals | {int(metrics['signal_count'])} |
-| Trades | {int(metrics['trade_count'])} |
-| Transaction cost | {float(metrics['transaction_cost']):,.0f} |
-| Annualized turnover | {float(metrics['annualized_turnover']):.2f}x |
+| Total return | {_pct(float(metrics["total_return"]))} |
+| CAGR | {_pct(float(metrics["cagr"]))} |
+| Maximum drawdown | {_pct(float(metrics["max_drawdown"]))} |
+| Annualized volatility | {_pct(float(metrics["annualized_volatility"]))} |
+| Sharpe, zero rate | {float(metrics["sharpe_zero_rate"]):.2f} |
+| Mean rank IC | {float(metrics["mean_rank_ic"]):.3f} |
+| Signals | {int(metrics["signal_count"])} |
+| Trades | {int(metrics["trade_count"])} |
+| Transaction cost | {float(metrics["transaction_cost"]):,.0f} |
+| Annualized turnover | {float(metrics["annualized_turnover"]):.2f}x |
 
 ## Diagnostics
 
