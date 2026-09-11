@@ -50,30 +50,39 @@ def run_next_open_backtest(
 
     for date in dates:
         day_prices = price.loc[date]
+        available_symbols = set(day_prices.index)
+        missing_held = sorted(set(shares).difference(available_symbols))
+        if missing_held:
+            raise ValueError(f"missing market prices for held symbols on {date.date()}: {missing_held}")
+
         if date in targets_by_execution:
             target_frame = targets_by_execution[date]
-            target_weights = dict(
-                zip(target_frame["symbol"], target_frame["target_weight"], strict=True)
-            )
+            target_weights = {
+                str(symbol): float(weight)
+                for symbol, weight in zip(
+                    target_frame["symbol"], target_frame["target_weight"], strict=True
+                )
+            }
+            missing_targets = sorted(set(target_weights).difference(available_symbols))
+            if missing_targets:
+                raise ValueError(
+                    f"missing execution prices for target symbols on {date.date()}: {missing_targets}"
+                )
+
             equity_open = cash
             for symbol, quantity in shares.items():
-                if symbol in day_prices.index:
-                    equity_open += quantity * float(day_prices.loc[symbol, "open"])
+                equity_open += quantity * float(day_prices.loc[symbol, "open"])
 
             desired: dict[str, int] = {}
             for symbol, weight in target_weights.items():
-                if symbol not in day_prices.index:
-                    continue
                 open_price = float(day_prices.loc[symbol, "open"])
-                desired[symbol] = _round_lot_shares(
-                    equity_open * float(weight), open_price, lot_size
-                )
+                desired[symbol] = _round_lot_shares(equity_open * weight, open_price, lot_size)
             for symbol in list(shares):
                 desired.setdefault(symbol, 0)
 
             deltas = {symbol: desired[symbol] - shares.get(symbol, 0) for symbol in desired}
             for symbol, delta in sorted(deltas.items()):
-                if delta >= 0 or symbol not in day_prices.index:
+                if delta >= 0:
                     continue
                 open_price = float(day_prices.loc[symbol, "open"])
                 quantity = -delta
@@ -94,7 +103,7 @@ def run_next_open_backtest(
                 )
 
             for symbol, delta in sorted(deltas.items()):
-                if delta <= 0 or symbol not in day_prices.index:
+                if delta <= 0:
                     continue
                 open_price = float(day_prices.loc[symbol, "open"])
                 affordable_lots = int(cash // (open_price * lot_size * (1.0 + cost_rate)))
@@ -122,8 +131,6 @@ def run_next_open_backtest(
 
         market_value = 0.0
         for symbol, quantity in sorted(shares.items()):
-            if symbol not in day_prices.index:
-                continue
             close_price = float(day_prices.loc[symbol, "close"])
             value = quantity * close_price
             market_value += value
