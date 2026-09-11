@@ -53,7 +53,9 @@ def run_next_open_backtest(
         available_symbols = set(day_prices.index)
         missing_held = sorted(set(shares).difference(available_symbols))
         if missing_held:
-            raise ValueError(f"missing market prices for held symbols on {date.date()}: {missing_held}")
+            raise ValueError(
+                f"missing market prices for held symbols on {date.date()}: {missing_held}"
+            )
 
         if date in targets_by_execution:
             target_frame = targets_by_execution[date]
