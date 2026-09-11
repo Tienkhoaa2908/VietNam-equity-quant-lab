@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "vn-equity-quant-lab"
 version = "0.2.0"
-description = "Causal quantitative-equity research and execution-aware backtesting framework"
+description = "Causal, execution-aware quantitative research framework for Vietnamese equities"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {file = "LICENSE"}
@@ -43,6 +43,8 @@ vnq = "vn_equity_quant.cli:main"
 [project.urls]
 Repository = "https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab"
 Documentation = "https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/tree/main/docs"
+Issues = "https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/issues"
+Changelog = "https://github.com/Tienkhoaa2908/VietNam-equity-quant-lab/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vn_equity_quant"]
