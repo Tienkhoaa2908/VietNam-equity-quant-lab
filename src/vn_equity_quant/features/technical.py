@@ -21,4 +21,6 @@ def build_time_series_features(frame: pd.DataFrame) -> pd.DataFrame:
         rolling_volume = part["volume"].rolling(20, min_periods=20).mean()
         part["volume_ratio_20"] = part["volume"] / rolling_volume - 1.0
         parts.append(part)
-    return pd.concat(parts, ignore_index=True).sort_values(["date", "symbol"]).reset_index(drop=True)
+    return (
+        pd.concat(parts, ignore_index=True).sort_values(["date", "symbol"]).reset_index(drop=True)
+    )
