@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="260" viewBox="0 0 1100 260">
+  <style>.t{font:600 18px system-ui;fill:#0f172a}.s{font:14px system-ui;fill:#475569}.line{stroke:#334155;stroke-width:3}.dot{fill:#0f172a}.ok{fill:#ecfdf5;stroke:#047857;stroke-width:2}.wait{fill:#eff6ff;stroke:#1d4ed8;stroke-width:2}</style>
+  <line x1="90" y1="125" x2="1010" y2="125" class="line"/>
+  <circle cx="230" cy="125" r="8" class="dot"/><circle cx="520" cy="125" r="8" class="dot"/><circle cx="850" cy="125" r="8" class="dot"/>
+  <rect x="120" y="35" width="220" height="65" rx="10" class="ok"/><text x="230" y="62" text-anchor="middle" class="t">Session t close</text><text x="230" y="84" text-anchor="middle" class="s">features + signal</text>
+  <rect x="410" y="150" width="220" height="65" rx="10" class="wait"/><text x="520" y="177" text-anchor="middle" class="t">Session t+1 open</text><text x="520" y="199" text-anchor="middle" class="s">earliest execution</text>
+  <rect x="720" y="35" width="260" height="65" rx="10" class="ok"/><text x="850" y="62" text-anchor="middle" class="t">Session t+h close</text><text x="850" y="84" text-anchor="middle" class="s">forward label becomes available</text>
+  <text x="375" y="115" text-anchor="middle" class="s">no same-close fill</text><text x="685" y="115" text-anchor="middle" class="s">label unavailable for training</text>
+</svg>

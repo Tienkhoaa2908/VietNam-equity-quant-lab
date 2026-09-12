@@ -1,0 +1,16 @@
+{
+  "annualized_turnover": 10.342809306188494,
+  "annualized_volatility": 0.11073512764984084,
+  "cagr": -0.0042841147874769225,
+  "end_nav": 984783677.9541744,
+  "max_drawdown": -0.19995394737291383,
+  "mean_rank_ic": 0.05962947336120592,
+  "median_rank_ic": 0.061179087875417135,
+  "sharpe_zero_rate": 0.01657507923207295,
+  "signal_count": 31,
+  "start_nav": 1000000000.0,
+  "total_return": -0.01521632204582557,
+  "trade_count": 437,
+  "traded_notional": 39154185219.82039,
+  "transaction_cost": 39154185.2198204
+}

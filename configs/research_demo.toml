@@ -1,0 +1,11 @@
+[research]
+seed = 42
+symbol_count = 30
+sessions = 900
+prediction_horizon = 20
+top_k = 10
+min_training_sessions = 252
+ridge_alpha = 10.0
+initial_cash = 1000000000.0
+transaction_cost_bps = 10.0
+lot_size = 100
